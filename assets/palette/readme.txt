@@ -1,0 +1,1 @@
+All credit goes to FirebrandX: http://www.firebrandx.com/nespalette.html

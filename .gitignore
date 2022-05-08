@@ -1,0 +1,12 @@
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.so
+*.dll
+*.wasm
+*.dylib
+*.o
+
+.vs/
