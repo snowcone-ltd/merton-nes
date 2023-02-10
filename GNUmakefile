@@ -19,9 +19,6 @@ FLAGS = \
 INCLUDES = \
 	-I.
 
-DEFS = \
-	-D_POSIX_C_SOURCE=200112L
-
 LD_FLAGS = \
 	-nodefaultlibs \
 	-shared
@@ -96,7 +93,7 @@ FLAGS := $(FLAGS) -O3 -g0 -flto -fvisibility=hidden
 LD_FLAGS := $(LD_FLAGS) -flto
 endif
 
-CFLAGS = $(INCLUDES) $(DEFS) $(FLAGS)
+CFLAGS = $(INCLUDES) $(FLAGS)
 
 all: clean clear
 	make objs -j4
