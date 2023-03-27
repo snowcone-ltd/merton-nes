@@ -71,8 +71,7 @@ LIBS = \
 	-lc
 
 OS = macosx
-MIN_VER = 10.14
-ARCH = x86_64
+MIN_VER = 10.15
 
 FLAGS := $(FLAGS) \
 	-m$(OS)-version-min=$(MIN_VER) \
