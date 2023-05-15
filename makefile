@@ -14,6 +14,7 @@ FLAGS = \
 	/MT \
 	/MP \
 	/volatile:iso \
+	/wd4100 \
 	/nologo
 
 INCLUDES = \

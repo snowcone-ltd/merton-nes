@@ -1,6 +1,6 @@
 UNAME_S = $(shell uname -s)
 ARCH = $(shell uname -m)
-LIB_NAME = merton-nes
+NAME = merton-nes
 
 OBJS = \
 	src/cart.o \
@@ -10,86 +10,100 @@ OBJS = \
 	src/ppu.o \
 	src/retro.o
 
-FLAGS = \
-	-Wall \
-	-Wextra \
-	-Wno-unused-value \
-	-std=c99
-
 INCLUDES = \
 	-I.
 
-LD_FLAGS = \
-	-nodefaultlibs \
-	-shared
+FLAGS = \
+	-Wall \
+	-Wextra \
+	-Wshadow \
+	-Wno-unused-parameter \
+	-std=c99 \
+	-fPIC
 
+LD_FLAGS = \
+	-nodefaultlibs
+
+LIBS = \
+	-lc
+
+ifdef DEBUG
+FLAGS := $(FLAGS) -O0 -g3
+else
+FLAGS := $(FLAGS) -O3 -g0 -flto -fvisibility=hidden
+LD_FLAGS := $(LD_FLAGS) -flto
+endif
 
 ############
 ### WASM ###
 ############
 ifdef WASM
 
+WASI_SDK = $(HOME)/wasi-sdk
+
+CC = $(WASI_SDK)/bin/clang
+
+TARGET = web
+ARCH := wasm32
 SUFFIX = wasm
 
-WASI_SDK = $(HOME)/wasi-sdk-12.0
-
-LD_FLAGS := \
+LD_FLAGS := $(LD_FLAGS) \
 	-Wl,--allow-undefined \
 	-Wl,--export-table \
+	-Wl,--import-memory,--export-memory,--max-memory=1073741824 \
 	-Wl,-z,stack-size=$$((8 * 1024 * 1024))
 
-CC = $(WASI_SDK)/bin/clang --sysroot=$(WASI_SDK)/share/wasi-sysroot
-
-OS = web
-ARCH := wasm32
+FLAGS := $(FLAGS) \
+	--sysroot=$(WASI_SDK)/share/wasi-sysroot \
+	--target=wasm32-wasi-threads \
+	-pthread
 
 else
-
 
 #############
 ### LINUX ###
 #############
 ifeq ($(UNAME_S), Linux)
 
+TARGET = linux
 SUFFIX = so
 
-LIBS = \
-	-lc
+LD_FLAGS := $(LD_FLAGS) \
+	-shared
 
-OS = linux
 endif
 
-
 #############
-### MACOS ###
+### APPLE ###
 #############
 ifeq ($(UNAME_S), Darwin)
 
+ifndef TARGET
+TARGET = macosx
+endif
+
+ifndef ARCH
+ARCH = x86_64
+endif
+
 SUFFIX = dylib
 
-LIBS = \
-	-lc
-
-OS = macosx
+ifeq ($(TARGET), macosx)
 MIN_VER = 10.15
+else
+MIN_VER = 13.0
+FLAGS := $(FLAGS) -fembed-bitcode
+endif
 
 FLAGS := $(FLAGS) \
-	-m$(OS)-version-min=$(MIN_VER) \
-	-isysroot $(shell xcrun --sdk $(OS) --show-sdk-path) \
+	-m$(TARGET)-version-min=$(MIN_VER) \
+	-isysroot $(shell xcrun --sdk $(TARGET) --show-sdk-path) \
 	-arch $(ARCH)
 
-endif
-endif
+LD_FLAGS := $(LD_FLAGS) \
+	-shared
 
-
-#############
-### BUILD ###
-#############
-ifdef DEBUG
-FLAGS := $(FLAGS) -O0 -g
-else
-FLAGS := $(FLAGS) -O3 -g0 -flto -fvisibility=hidden
-LD_FLAGS := $(LD_FLAGS) -flto
+endif
 endif
 
 CFLAGS = $(INCLUDES) $(FLAGS)
@@ -98,34 +112,37 @@ all: clean clear
 	make objs -j4
 
 objs: $(OBJS)
-	$(CC) -o $(LIB_NAME).$(SUFFIX) $(LD_FLAGS) $(OBJS) $(LIBS)
+	$(CC) -o $(NAME).$(SUFFIX) $(LD_FLAGS) $(OBJS) $(LIBS)
 
 merton: all
-	cp $(LIB_NAME).$(SUFFIX) ../merton/merton-files/cores
-
+	cp $(NAME).$(SUFFIX) ../merton/merton-files/cores
 
 ###############
 ### ANDROID ###
 ###############
 
-ANDROID_PROJECT = android
-ANDROID_NDK = $(HOME)/android-ndk-r21d
+# developer.android.com/ndk/downloads -> ~/android-ndk
 
-android: clean clear
-	@mkdir -p $(ANDROID_PROJECT)/app/libs
-	@$(ANDROID_NDK)/ndk-build -j4 \
-		NDK_PROJECT_PATH=. \
+ifndef ANDROID_NDK_ROOT
+ANDROID_NDK_ROOT = $(HOME)/android-ndk
+endif
+
+ifndef ABI
+ABI = all
+endif
+
+android: clean clear $(SHADERS)
+	@$(ANDROID_NDK_ROOT)/ndk-build -j4 \
 		APP_BUILD_SCRIPT=Android.mk \
-		APP_OPTIM=release \
-		APP_PLATFORM=android-26 \
-		NDK_OUT=$(ANDROID_PROJECT)/build \
-		NDK_LIBS_OUT=$(ANDROID_PROJECT)/app/libs \
-		--no-print-directory \
-		| grep -v 'fcntl(): Operation not supported'
+		APP_PLATFORM=android-28 \
+		APP_ABI=$(ABI) \
+		NDK_PROJECT_PATH=. \
+		--no-print-directory
 
 clean:
-	@rm -rf $(ANDROID_PROJECT)/build
-	@rm -rf $(LIB_NAME).$(SUFFIX)
+	@rm -rf obj
+	@rm -rf libs
+	@rm -rf $(NAME).*
 	@rm -rf $(OBJS)
 
 clear:

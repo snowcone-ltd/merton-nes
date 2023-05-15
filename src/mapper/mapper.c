@@ -134,8 +134,6 @@ static uint8_t mapper_bus_conflict(struct cart *cart, uint16_t addr, uint8_t v)
 
 static bool mapper_block_2007(struct cart *cart)
 {
-	cart;
-
 	M[185].mirror_shift = (M[185].mirror_shift << 1) | 1;
 
 	return !(M[185].mirror_shift & 0xFE);

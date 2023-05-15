@@ -48,8 +48,6 @@ static bool retro_cmd(unsigned cmd, void *data)
 
 static void retro_video(const uint32_t *frame, void *opaque)
 {
-	opaque;
-
 	if (RETRO_VIDEO_REFRESH) {
 		// Crop top + bottom overscan 8px
 		RETRO_VIDEO_REFRESH(frame + (NES_FRAME_WIDTH * 8),
@@ -59,8 +57,6 @@ static void retro_video(const uint32_t *frame, void *opaque)
 
 static void retro_audio(const int16_t *frames, uint32_t count, void *opaque)
 {
-	opaque;
-
 	if (RETRO_AUDIO_SAMPLE_BATCH)
 		RETRO_AUDIO_SAMPLE_BATCH(frames, count);
 }
@@ -78,8 +74,6 @@ static void retro_log(const char *msg)
 
 static bool retro_set_eject_state(bool ejected)
 {
-	ejected;
-
 	return false;
 }
 
@@ -114,8 +108,6 @@ static unsigned retro_get_num_images(void)
 
 static bool retro_replace_image_index(unsigned index, const struct retro_game_info *info)
 {
-	index; info;
-
 	return false;
 }
 
@@ -284,7 +276,6 @@ RETRO_API void retro_get_system_av_info(struct retro_system_av_info *info)
 
 RETRO_API void retro_set_controller_port_device(unsigned port, unsigned device)
 {
-	port; device;
 }
 
 RETRO_API void retro_reset(void)
@@ -362,7 +353,6 @@ RETRO_API void retro_cheat_reset(void)
 
 RETRO_API void retro_cheat_set(unsigned index, bool enabled, const char *code)
 {
-	index; enabled; code;
 }
 
 static bool retro_get_desc_from_db(size_t offset, uint32_t crc32, NES_CartDesc *desc)
@@ -514,8 +504,6 @@ RETRO_API bool retro_load_game(const struct retro_game_info *game)
 
 RETRO_API bool retro_load_game_special(unsigned game_type, const struct retro_game_info *info, size_t num_info)
 {
-	game_type; info; num_info;
-
 	return false;
 }
 
