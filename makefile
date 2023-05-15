@@ -1,6 +1,5 @@
-OS = windows
-ARCH = %Platform%
-BIN_NAME = merton-nes.dll
+ARCH = %%Platform%%
+BIN = merton-nes.dll
 
 OBJS = \
 	src\cart.obj \
@@ -21,8 +20,8 @@ INCLUDES = \
 	-I.
 
 DEFS = \
-	-DWIN32_LEAN_AND_MEAN \
-	-DUNICODE
+	-DUNICODE \
+	-DWIN32_LEAN_AND_MEAN
 
 LINK_FLAGS = \
 	/nodefaultlib \
@@ -36,28 +35,28 @@ LIBS = \
 	kernel32.lib
 
 !IFDEF DEBUG
-FLAGS = $(FLAGS) /Oy- /Ob0 /Zi
+FLAGS = $(FLAGS) /Ob0 /Zi /Oy-
 LINK_FLAGS = $(LINK_FLAGS) /debug
 !ELSE
-FLAGS = $(FLAGS) /O2 /GS- /Gw /Gy /DL /GL
+FLAGS = $(FLAGS) /O2 /GS- /Gw /GL
 LINK_FLAGS = $(LINK_FLAGS) /LTCG
 !ENDIF
 
 CFLAGS = $(INCLUDES) $(DEFS) $(FLAGS)
 
 all: clean clear $(OBJS)
-	link /out:$(BIN_NAME) $(LINK_FLAGS) *.obj $(LIBS) $(RESOURCES)
+	link /out:$(BIN) $(LINK_FLAGS) *.obj $(LIBS)
 
 merton: all
-	copy $(BIN_NAME) ..\merton\merton-files\cores
+	copy $(BIN) ..\merton\merton-files\cores
 
 clean:
-	@del /q *.obj 2>nul
-	@del /q *.lib 2>nul
-	@del /q *.dll 2>nul
-	@del /q *.ilk 2>nul
-	@del /q *.pdb 2>nul
-	@del /q *.exp 2>nul
+	@-del /q *.obj 2>nul
+	@-del /q *.lib 2>nul
+	@-del /q *.dll 2>nul
+	@-del /q *.ilk 2>nul
+	@-del /q *.pdb 2>nul
+	@-del /q *.exp 2>nul
 
 clear:
 	@cls
