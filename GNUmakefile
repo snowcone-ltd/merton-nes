@@ -31,7 +31,7 @@ ifdef DEBUG
 FLAGS := $(FLAGS) -O0 -g3
 else
 FLAGS := $(FLAGS) -O3 -g0 -flto -fvisibility=hidden
-LD_FLAGS := $(LD_FLAGS) -flto
+LD_FLAGS := $(LD_FLAGS) -flto=auto
 endif
 
 ############
