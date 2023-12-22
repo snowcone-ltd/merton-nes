@@ -51,6 +51,9 @@ all: clean clear $(OBJS)
 merton: all
 	copy $(BIN) ..\merton\merton-files\cores
 
+upload: all
+	python ..\merton\assets\upload-core.py windows x86_64 $(BIN)
+
 clean:
 	@-del /q *.obj 2>nul
 	@-del /q *.lib 2>nul

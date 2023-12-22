@@ -117,6 +117,9 @@ objs: $(OBJS)
 merton: all
 	cp $(NAME).$(SUFFIX) ../merton/merton-files/cores
 
+upload: all
+	python3 ../merton/assets/upload-core.py linux x86_64 $(NAME).$(SUFFIX)
+
 ###############
 ### ANDROID ###
 ###############
