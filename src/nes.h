@@ -9,7 +9,7 @@
 #define NES_FRAME_HEIGHT 240
 
 #define NES_CONFIG_DEFAULTS \
-	{NES_PALETTE_SMOOTH, 48000, NES_CHANNEL_ALL, 0, 0, 8, true}
+	{NES_PALETTE_KITRINX, 48000, NES_CHANNEL_ALL, 0, 0, 8, 7, true}
 
 #ifdef __cplusplus
 extern "C" {
@@ -80,6 +80,7 @@ typedef struct {
 	uint16_t preNMI;
 	uint16_t postNMI;
 	uint8_t maxSprites;
+	uint8_t highPass;
 	bool stereo;
 } NES_Config;
 

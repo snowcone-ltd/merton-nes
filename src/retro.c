@@ -34,6 +34,7 @@ static const struct retro_variable RETRO_VARIABLES[] = {
 	{"merton-nes-nes_overclock", "Overclock; Off|On"},
 	{"merton-nes-nes_sprite_limit", "Sprite Limit; On|Off"},
 	{"merton-nes-nes_sample_rate", "Sample Rate; 48000|44100|22050|16000|11025|8000"},
+	{"merton-nes-nes_high_pass", "High Pass Shift; 7|5|6|8|9"},
 	{"merton-nes-nes_stereo", "Stereo; On|Off"},
 	{NULL, NULL},
 };
@@ -207,6 +208,9 @@ static NES_Config retro_refresh_variables(void)
 					retro_get_system_av_info(&av_info);
 					retro_cmd(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &av_info);
 				}
+
+			} else if (!strcmp(var.key, "merton-nes-nes_high_pass")) {
+				cfg.highPass = (uint8_t) atoi(var.value);
 
 			} else if (!strcmp(var.key, "merton-nes-nes_stereo")) {
 				cfg.stereo = !strcmp(var.value, "On") ? true : false;

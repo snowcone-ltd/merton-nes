@@ -346,7 +346,6 @@ static void apu_dmc_step_timer(struct dmc *d, NES *nes)
 
 #define TIME_BITS   20
 #define TIME_UNIT   (1 << TIME_BITS)
-#define BASS_SHIFT  6
 #define DELTA_BITS  15
 #define PHASE_COUNT 32
 #define OUTPUT_SIZE 1024
@@ -456,7 +455,7 @@ static void apu_dac_output_channel(struct dac *dac, uint8_t chan, int32_t offset
 	int16_t s = apu_clampi32(dac->integrator[chan] >> DELTA_BITS);
 	dac->output[offset * 2 + chan] = s;
 	dac->integrator[chan] += dac->samples[chan][offset];
-	dac->integrator[chan] -= s << (DELTA_BITS - BASS_SHIFT); // High pass filter
+	dac->integrator[chan] -= s << (DELTA_BITS - dac->cfg.highPass); // High pass filter
 }
 
 static void apu_dac_spatialize(struct dac *dac, int32_t x)
