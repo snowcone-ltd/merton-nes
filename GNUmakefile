@@ -118,7 +118,7 @@ merton: all
 	cp $(NAME).$(SUFFIX) ../merton/merton-files/cores
 
 upload: all
-	python3 ../merton/assets/upload-core.py linux x86_64 $(NAME).$(SUFFIX)
+	python3 ../merton/assets/upload-core.py $(TARGET) $(ARCH) $(NAME).$(SUFFIX)
 
 ###############
 ### ANDROID ###
