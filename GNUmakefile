@@ -1,5 +1,6 @@
 UNAME_S = $(shell uname -s)
 ARCH = $(shell uname -m)
+CORE_ARCH = x86_64
 NAME = merton-nes
 
 OBJS = \
@@ -86,6 +87,10 @@ ifndef ARCH
 ARCH = x86_64
 endif
 
+ifeq ($(ARCH), arm64)
+CORE_ARCH := arm64
+endif
+
 SUFFIX = dylib
 
 ifeq ($(TARGET), macosx)
@@ -118,7 +123,7 @@ merton: all
 	cp $(NAME).$(SUFFIX) ../merton/merton-files/cores
 
 upload: all
-	python3 ../merton/assets/upload-core.py $(TARGET) $(ARCH) $(NAME).$(SUFFIX)
+	python3 ../merton/assets/upload-core.py $(TARGET) $(CORE_ARCH) $(NAME).$(SUFFIX)
 
 ###############
 ### ANDROID ###
