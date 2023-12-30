@@ -106,6 +106,7 @@ FLAGS := $(FLAGS) \
 	-arch $(ARCH)
 
 LD_FLAGS := $(LD_FLAGS) \
+	-arch $(ARCH) \
 	-shared
 
 endif
