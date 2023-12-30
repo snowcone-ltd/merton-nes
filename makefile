@@ -1,5 +1,5 @@
 ARCH = %%Platform%%
-BIN = merton-nes.dll
+NAME = merton-nes
 
 OBJS = \
 	src\cart.obj \
@@ -46,13 +46,13 @@ LINK_FLAGS = $(LINK_FLAGS) /LTCG
 CFLAGS = $(INCLUDES) $(DEFS) $(FLAGS)
 
 all: clean clear $(OBJS)
-	link /out:$(BIN) $(LINK_FLAGS) *.obj $(LIBS)
+	link /out:$(NAME).dll $(LINK_FLAGS) *.obj $(LIBS)
 
 merton: all
-	copy $(BIN) ..\merton\merton-files\cores
+	copy $(NAME).dll ..\merton\merton-files\cores
 
 upload: all
-	python ..\merton\assets\upload-core.py upload windows x86_64 $(BIN)
+	python ..\merton\assets\upload-core.py upload $(NAME) windows x86_64 $(NAME).dll
 
 clean:
 	@-del /q *.obj 2>nul
