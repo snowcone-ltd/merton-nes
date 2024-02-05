@@ -2,12 +2,12 @@ ARCH = %%Platform%%
 NAME = merton-nes
 
 OBJS = \
+	src\core.obj \
 	src\cart.obj \
 	src\apu.obj \
 	src\cpu.obj \
 	src\sys.obj \
-	src\ppu.obj \
-	src\retro.obj
+	src\ppu.obj
 
 FLAGS = \
 	/W4 \
@@ -21,8 +21,7 @@ INCLUDES = \
 	-I.
 
 DEFS = \
-	-DUNICODE \
-	-DWIN32_LEAN_AND_MEAN
+	-DCORE_EXPORT
 
 LINK_FLAGS = \
 	/nodefaultlib \

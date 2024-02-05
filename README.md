@@ -1,10 +1,10 @@
-`merton-nes` is a NES emulator packaged as a `libretro` core. Mostly written as a learning project, the focus is on code clarity and readability, however it is a very accurate emulator that passes most of the [tests](/test) created by the community. Enjoy!
+`merton-nes` is a NES emulator packaged using the [Merton](https://github.com/snowcone-ltd/merton/blob/main/src/core.h) core interface. The focus is on code clarity and readability, however it is a very accurate emulator that passes most of the [tests](/test) created by the community. Enjoy!
 
 If you're interested in being part of the journey, join us on [Discord](https://discord.gg/46WEVz8BCv).
 
 ### Building
 
-`merton-nes` has no dependencies outside of what's shipped with the basic developer toolchains. Run `make` or `nmake` (on Windows) to build the `libretro` core (a single shared object).
+`merton-nes` has no dependencies outside of what's shipped with the basic developer toolchains. Run `make` or `nmake` (on Windows) to build the core (a single shared object).
 
 ### Mapper Support
 According to [NRS NES 2.0 DB](/assets/db/):

@@ -4,12 +4,12 @@ CORE_ARCH = x86_64
 NAME = merton-nes
 
 OBJS = \
+	src/core.o \
 	src/cart.o \
 	src/apu.o \
 	src/sys.o \
 	src/cpu.o \
-	src/ppu.o \
-	src/retro.o
+	src/ppu.o
 
 INCLUDES = \
 	-I.
@@ -21,6 +21,10 @@ FLAGS = \
 	-Wno-unused-parameter \
 	-std=c99 \
 	-fPIC
+
+DEFS = \
+	-D_POSIX_C_SOURCE=200809L \
+	-DCORE_EXPORT
 
 LD_FLAGS = \
 	-nodefaultlibs
@@ -112,7 +116,7 @@ LD_FLAGS := $(LD_FLAGS) \
 endif
 endif
 
-CFLAGS = $(INCLUDES) $(FLAGS)
+CFLAGS = $(INCLUDES) $(FLAGS) $(DEFS)
 
 all: clean clear
 	make objs -j4
