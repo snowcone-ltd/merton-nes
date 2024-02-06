@@ -12,6 +12,7 @@
 #endif
 
 #include "nes.h"
+#include "settings.h"
 #include "assets/db/nes20db.h"
 
 struct Core {
@@ -39,9 +40,6 @@ Core *CoreLoad(const char *systemDir)
 
 	ctx->system_dir = strdup(systemDir);
 
-	ctx->cfg = (NES_Config) NES_CONFIG_DEFAULTS;
-	ctx->nes = NES_Create(&ctx->cfg);
-
 	return ctx;
 }
 
@@ -54,7 +52,6 @@ void CoreUnload(Core **core)
 
 	CoreUnloadGame(ctx);
 
-	NES_Destroy(&ctx->nes);
 	free(ctx->system_dir);
 
 	free(ctx);
@@ -204,9 +201,36 @@ static bool core_load_rom(Core *ctx, const uint8_t *rom, size_t size)
 	return NES_LoadCart(ctx->nes, rom, size, found_in_db ? &desc : NULL);
 }
 
+static NES_Config core_load_settings(void)
+{
+	NES_Config cfg = (NES_Config) NES_CONFIG_DEFAULTS;
+
+	cfg.palette =
+		CMP_ENUM("palette", "Kitrinx") ? NES_PALETTE_KITRINX :
+		CMP_ENUM("palette", "Smooth") ? NES_PALETTE_SMOOTH :
+		CMP_ENUM("palette", "NES Classic") ? NES_PALETTE_CLASSIC :
+		CMP_ENUM("palette", "Composite Direct") ? NES_PALETTE_COMPOSITE :
+		CMP_ENUM("palette", "PVM Style D93") ? NES_PALETTE_PVM_D93 :
+		CMP_ENUM("palette", "PC-10") ? NES_PALETTE_PC10 :
+		CMP_ENUM("palette", "Sony CXA") ? NES_PALETTE_SONY_CXA :
+		CMP_ENUM("palette", "Wavebeam") ? NES_PALETTE_WAVEBEAM :
+		NES_PALETTE_KITRINX;
+
+	cfg.preNMI = cfg.postNMI = CMP_BOOL("overclock") ? 131 : 0;
+	cfg.maxSprites = CMP_BOOL("sprite-limit") ? 8 : 64;
+	cfg.sampleRate = (uint32_t) atoi(GET_VAL("sample-rate"));
+	cfg.highPass = (uint8_t) atoi(GET_VAL("high-pass"));
+	cfg.stereo = CMP_BOOL("stereo");
+
+	return cfg;
+}
+
 bool CoreLoadGame(Core *ctx, CoreSystem system, const char *path, const void *saveData,
 	size_t saveDataSize)
 {
+	ctx->cfg = core_load_settings();
+	ctx->nes = NES_Create(&ctx->cfg);
+
 	size_t size = 0;
 	void *rom = core_read_file(path, 4 * 1024 * 1024, &size);
 
@@ -226,6 +250,7 @@ void CoreUnloadGame(Core *ctx)
 	if (!ctx)
 		return;
 
+	NES_Destroy(&ctx->nes);
 	NES_SetLogCallback(NULL);
 }
 
@@ -364,146 +389,18 @@ bool CoreInsertDisc(Core *ctx, const char *path)
 	return NES_SetDisk(ctx->nes, disk);
 }
 
-
-// Settings
-
-#define CORE_SETTING_PREFIX "merton-nes-"
-
-#define CMP_SETTING(key, suffix) \
-	!strcmp(key, CORE_SETTING_PREFIX suffix)
-
-#define CMP_BOOL(b) \
-	!strcmp(b, "true")
-
-#define CMP_ENUM(e, val) \
-	!strcmp(e, val)
-
-static const CoreSetting CORE_SETTINGS[] = {{
-	.type = CORE_SETTING_ENUM,
-	.group = CORE_SETTING_GROUP_VIDEO,
-	.desc = "Palette",
-	.key = CORE_SETTING_PREFIX "palette",
-	.opts = {"Kitrinx", "Smooth", "NES Classic", "Composite Direct",
-		"PVM Style D93", "PC-10", "Sony CXA", "Wavebeam"},
-	.nopts = 8,
-}, {
-	.type = CORE_SETTING_BOOL,
-	.group = CORE_SETTING_GROUP_GENERAL,
-	.desc = "Overclock",
-	.key = CORE_SETTING_PREFIX "overclock",
-}, {
-	.type = CORE_SETTING_BOOL,
-	.group = CORE_SETTING_GROUP_GENERAL,
-	.desc = "Sprite Limit",
-	.key = CORE_SETTING_PREFIX "sprite-limit",
-}, {
-	.type = CORE_SETTING_ENUM,
-	.group = CORE_SETTING_GROUP_AUDIO,
-	.desc = "Sample Rate",
-	.key = CORE_SETTING_PREFIX "sample-rate",
-	.opts = {"48000", "44100", "22050", "16000", "11025", "8000"},
-	.nopts = 6,
-}, {
-	.type = CORE_SETTING_ENUM,
-	.group = CORE_SETTING_GROUP_AUDIO,
-	.desc = "High Pass Shift",
-	.key = CORE_SETTING_PREFIX "high-pass",
-	.opts = {"5", "6", "7", "8", "9"},
-	.nopts = 5,
-}, {
-	.type = CORE_SETTING_BOOL,
-	.group = CORE_SETTING_GROUP_AUDIO,
-	.desc = "Stereo",
-	.key = CORE_SETTING_PREFIX "stereo",
-}};
-
-const CoreSetting *CoreGetAllSettings(Core *ctx, uint32_t *len)
+CoreSetting *CoreGetSettings(uint32_t *len)
 {
 	*len = sizeof(CORE_SETTINGS) / sizeof(CoreSetting);
 
 	return CORE_SETTINGS;
 }
 
-const char *CoreGetSetting(Core *ctx, const char *key)
-{
-	if (!ctx)
-		return NULL;
-
-	if (CMP_SETTING(key, "palette")) {
-		return
-			ctx->cfg.palette == NES_PALETTE_KITRINX ? "Kitrinx" :
-			ctx->cfg.palette == NES_PALETTE_SMOOTH ? "Smooth" :
-			ctx->cfg.palette == NES_PALETTE_CLASSIC ? "NES Classic" :
-			ctx->cfg.palette == NES_PALETTE_COMPOSITE ? "Composite Direct" :
-			ctx->cfg.palette == NES_PALETTE_PVM_D93 ? "PVM Style D93" :
-			ctx->cfg.palette == NES_PALETTE_PC10 ? "PC-10" :
-			ctx->cfg.palette == NES_PALETTE_SONY_CXA ? "Sony CXA" :
-			ctx->cfg.palette == NES_PALETTE_WAVEBEAM ? "Wavebeam" :
-			"";
-
-	} else if (CMP_SETTING(key, "overclock")) {
-		return ctx->cfg.preNMI == 131 ? "true" : "false";
-
-	} else if (CMP_SETTING(key, "sprite-limit")) {
-		return ctx->cfg.maxSprites == 8 ? "true" : "false";
-
-	} else if (CMP_SETTING(key, "sample-rate")) {
-		snprintf(ctx->settings.sample_rate, 16, "%u", ctx->cfg.sampleRate);
-		return ctx->settings.sample_rate;
-
-	} else if (CMP_SETTING(key, "high-pass")) {
-		snprintf(ctx->settings.high_pass, 16, "%u", ctx->cfg.highPass);
-		return ctx->settings.high_pass;
-
-	} else if (CMP_SETTING(key, "stereo")) {
-		return ctx->cfg.stereo ? "true" : "false";
-	}
-
-	return NULL;
-}
-
-void CoreSetSetting(Core *ctx, const char *key, const char *val)
+void CoreUpdateSettings(Core *ctx)
 {
 	if (!ctx)
 		return;
 
-	if (CMP_SETTING(key, "palette")) {
-		ctx->cfg.palette =
-			CMP_ENUM(val, "Kitrinx") ? NES_PALETTE_KITRINX :
-			CMP_ENUM(val, "Smooth") ? NES_PALETTE_SMOOTH :
-			CMP_ENUM(val, "NES Classic") ? NES_PALETTE_CLASSIC :
-			CMP_ENUM(val, "Composite Direct") ? NES_PALETTE_COMPOSITE :
-			CMP_ENUM(val, "PVM Style D93") ? NES_PALETTE_PVM_D93 :
-			CMP_ENUM(val, "PC-10") ? NES_PALETTE_PC10 :
-			CMP_ENUM(val, "Sony CXA") ? NES_PALETTE_SONY_CXA :
-			CMP_ENUM(val, "Wavebeam") ? NES_PALETTE_WAVEBEAM :
-			NES_PALETTE_KITRINX;
-
-	} else if (CMP_SETTING(key, "overclock")) {
-		ctx->cfg.preNMI = ctx->cfg.postNMI = CMP_BOOL(val) ? 131 : 0;
-
-	} else if (CMP_SETTING(key, "sprite-limit")) {
-		ctx->cfg.maxSprites = CMP_BOOL(val) ? 8 : 64;
-
-	} else if (CMP_SETTING(key, "sample-rate")) {
-		ctx->cfg.sampleRate = (uint32_t) atoi(val);
-
-	} else if (CMP_SETTING(key, "high-pass")) {
-		ctx->cfg.highPass = (uint8_t) atoi(val);
-
-	} else if (CMP_SETTING(key, "stereo")) {
-		ctx->cfg.stereo = CMP_BOOL(val);
-	}
-
-	NES_SetConfig(ctx->nes, &ctx->cfg);
-}
-
-void CoreResetSettings(Core *ctx)
-{
-	if (!ctx)
-		return;
-
-	ctx->cfg = (NES_Config) NES_CONFIG_DEFAULTS;
-
+	ctx->cfg = core_load_settings();
 	NES_SetConfig(ctx->nes, &ctx->cfg);
 }
