@@ -19,19 +19,14 @@ struct Core {
 	NES *nes;
 	NES_Config cfg;
 	NES_Button buttons;
-	CoreVideoFunc video_func;
-	CoreAudioFunc audio_func;
-	void *video_opaque;
-	void *audio_opaque;
-
-	struct {
-		char high_pass[16];
-		char sample_rate[16];
-	} settings;
 };
 
-static CoreLogFunc CORE_LOG_FUNC;
+static CoreLogFunc CORE_LOG;
+static CoreAudioFunc CORE_AUDIO;
+static CoreVideoFunc CORE_VIDEO;
 static void *CORE_LOG_OPAQUE;
+static void *CORE_AUDIO_OPAQUE;
+static void *CORE_VIDEO_OPAQUE;
 
 void CoreUnloadGame(Core **core)
 {
@@ -49,28 +44,27 @@ void CoreUnloadGame(Core **core)
 
 static void core_log(const char *msg)
 {
-	if (CORE_LOG_FUNC)
-		CORE_LOG_FUNC(msg, CORE_LOG_OPAQUE);
+	CORE_LOG(msg, CORE_LOG_OPAQUE);
 }
 
-void CoreSetLogFunc(Core *ctx, CoreLogFunc func, void *opaque)
+void CoreSetLogFunc(CoreLogFunc func, void *opaque)
 {
-	CORE_LOG_FUNC = func;
+	CORE_LOG = func;
 	CORE_LOG_OPAQUE = opaque;
 
 	NES_SetLogCallback(core_log);
 }
 
-void CoreSetAudioFunc(Core *ctx, CoreAudioFunc func, void *opaque)
+void CoreSetAudioFunc(CoreAudioFunc func, void *opaque)
 {
-	ctx->audio_func = func;
-	ctx->audio_opaque = opaque;
+	CORE_AUDIO = func;
+	CORE_AUDIO_OPAQUE = opaque;
 }
 
-void CoreSetVideoFunc(Core *ctx, CoreVideoFunc func, void *opaque)
+void CoreSetVideoFunc(CoreVideoFunc func, void *opaque)
 {
-	ctx->video_func = func;
-	ctx->video_opaque = opaque;
+	CORE_VIDEO = func;
+	CORE_VIDEO_OPAQUE = opaque;
 }
 
 static FILE *core_fopen(const char *path)
@@ -250,21 +244,16 @@ float CoreGetAspectRatio(Core *ctx)
 
 static void core_video(const uint32_t *frame, void *opaque)
 {
-	Core *ctx = opaque;
-
-	if (ctx->video_func) {
-		// Crop top + bottom overscan 8px
-		ctx->video_func(frame + (NES_FRAME_WIDTH * 8), CORE_COLOR_FORMAT_BGRA,
-			NES_FRAME_WIDTH, NES_FRAME_HEIGHT - 16, NES_FRAME_WIDTH * 4, ctx->video_opaque);
-	}
+	// Crop top + bottom overscan 8px
+	CORE_VIDEO(frame + (NES_FRAME_WIDTH * 8), CORE_COLOR_FORMAT_BGRA,
+		NES_FRAME_WIDTH, NES_FRAME_HEIGHT - 16, NES_FRAME_WIDTH * 4, CORE_VIDEO_OPAQUE);
 }
 
 static void core_audio(const int16_t *frames, uint32_t count, void *opaque)
 {
 	Core *ctx = opaque;
 
-	if (ctx->audio_func)
-		ctx->audio_func(frames, count, ctx->cfg.sampleRate, ctx->audio_opaque);
+	CORE_AUDIO(frames, count, ctx->cfg.sampleRate, CORE_AUDIO_OPAQUE);
 }
 
 void CoreRun(Core *ctx)
