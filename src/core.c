@@ -23,7 +23,6 @@ struct Core {
 	CoreAudioFunc audio_func;
 	void *video_opaque;
 	void *audio_opaque;
-	char *system_dir;
 
 	struct {
 		char high_pass[16];
@@ -34,25 +33,15 @@ struct Core {
 static CoreLogFunc CORE_LOG_FUNC;
 static void *CORE_LOG_OPAQUE;
 
-Core *CoreLoad(const char *systemDir)
-{
-	Core *ctx = calloc(1, sizeof(Core));
-
-	ctx->system_dir = strdup(systemDir);
-
-	return ctx;
-}
-
-void CoreUnload(Core **core)
+void CoreUnloadGame(Core **core)
 {
 	if (!core || !*core)
 		return;
 
 	Core *ctx = *core;
 
-	CoreUnloadGame(ctx);
-
-	free(ctx->system_dir);
+	NES_Destroy(&ctx->nes);
+	NES_SetLogCallback(NULL);
 
 	free(ctx);
 	*core = NULL;
@@ -135,10 +124,10 @@ static uint32_t core_crc32(uint32_t crc, const uint8_t *buf, size_t len)
 	return ~crc;
 }
 
-static bool core_load_fds(Core *ctx, const uint8_t *rom, size_t size)
+static bool core_load_fds(Core *ctx, const char *system_dir, const uint8_t *rom, size_t size)
 {
 	char path[1024];
-	snprintf(path, 1024, "%s\\%s", ctx->system_dir, "disksys.rom");
+	snprintf(path, 1024, "%s\\%s", system_dir, "disksys.rom");
 
 	size_t bsize = 0;
 	void *bios = core_read_file(path, 0x2000, &bsize);
@@ -225,16 +214,17 @@ static NES_Config core_load_settings(void)
 	return cfg;
 }
 
-bool CoreLoadGame(Core *ctx, CoreSystem system, const char *path, const void *saveData,
-	size_t saveDataSize)
+Core *CoreLoadGame(CoreSystem system, const char *systemDir, const char *path,
+	const void *saveData, size_t saveDataSize)
 {
+	Core *ctx = calloc(1, sizeof(Core));
 	ctx->cfg = core_load_settings();
 	ctx->nes = NES_Create(&ctx->cfg);
 
 	size_t size = 0;
 	void *rom = core_read_file(path, 4 * 1024 * 1024, &size);
 
-	bool loaded = core_is_fds(path) ? core_load_fds(ctx, rom, size) :
+	bool loaded = core_is_fds(path) ? core_load_fds(ctx, systemDir, rom, size) :
 		core_load_rom(ctx, rom, size);
 
 	free(rom);
@@ -242,16 +232,10 @@ bool CoreLoadGame(Core *ctx, CoreSystem system, const char *path, const void *sa
 	if (loaded && saveData && saveDataSize <= NES_GetSRAMSize(ctx->nes))
 		memcpy(NES_GetSRAM(ctx->nes), saveData, saveDataSize);
 
-	return loaded;
-}
+	if (!loaded)
+		CoreUnloadGame(&ctx);
 
-void CoreUnloadGame(Core *ctx)
-{
-	if (!ctx)
-		return;
-
-	NES_Destroy(&ctx->nes);
-	NES_SetLogCallback(NULL);
+	return ctx;
 }
 
 double CoreGetFrameRate(Core *ctx)
