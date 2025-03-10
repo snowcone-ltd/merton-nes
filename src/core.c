@@ -264,6 +264,10 @@ void CoreRun(Core *ctx)
 	NES_NextFrame(ctx->nes, core_video, core_audio, ctx);
 }
 
+void CorePauseThreads(Core *ctx, bool pause)
+{
+}
+
 void *CoreGetSaveData(Core *ctx, size_t *size)
 {
 	if (!ctx)
