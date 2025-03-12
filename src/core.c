@@ -268,7 +268,7 @@ void CorePauseThreads(Core *ctx, bool pause)
 {
 }
 
-void *CoreGetSaveData(Core *ctx, size_t *size)
+void *CoreGetSaveData(Core *ctx, size_t *size, CoreSaveDataType *type)
 {
 	if (!ctx)
 		return NULL;
