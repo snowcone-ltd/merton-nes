@@ -30,8 +30,8 @@ LINK_FLAGS = \
 
 LIBS = \
 	libvcruntime.lib \
-	libucrt.lib \
 	libcmt.lib \
+	ucrt.lib \
 	kernel32.lib
 
 !IFDEF DEBUG
