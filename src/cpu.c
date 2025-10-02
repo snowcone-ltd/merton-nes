@@ -677,11 +677,17 @@ static uint8_t cpu_dec(struct cpu *cpu, NES *nes, uint16_t addr)
 	return val;
 }
 
-static void cpu_sxa_sya(NES *nes, uint16_t addr, uint8_t r)
+static void cpu_sxa_sya(NES *nes, uint16_t addr, uint8_t idx, uint8_t r, bool pagex)
 {
-	uint8_t addr_high = addr >> 8;
+	// https://forums.nesdev.org/viewtopic.php?p=297765
 
-	sys_write_cycle(nes, ((r & (addr_high + 1)) << 8) | (addr & 0xFF), r & (addr_high + 1));
+	uint16_t base_addr = addr - idx;
+	uint16_t addr_high = addr >> 8;
+
+	if (pagex)
+		addr_high &= r;
+
+	sys_write_cycle(nes, (addr_high << 8) | (addr & 0xFF), r & ((base_addr >> 8) + 1));
 }
 
 static void cpu_and(struct cpu *cpu, uint8_t v)
@@ -1129,11 +1135,11 @@ static bool cpu_exec(struct cpu *cpu, NES *nes)
 			break;
 
 		case SYA:
-			cpu_sxa_sya(nes, addr, cpu->Y);
+			cpu_sxa_sya(nes, addr, cpu->X, cpu->Y, pagex);
 			break;
 
 		case SXA:
-			cpu_sxa_sya(nes, addr, cpu->X);
+			cpu_sxa_sya(nes, addr, cpu->Y, cpu->X, pagex);
 			break;
 
 		case XAA:
