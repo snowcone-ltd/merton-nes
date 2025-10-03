@@ -1148,8 +1148,7 @@ static bool cpu_exec(struct cpu *cpu, NES *nes)
 			break;
 
 		case AXA:
-			cpu->X &= cpu->A;
-			sys_write_cycle(nes, addr, cpu->X & 0x07);
+			cpu_sxa_sya(nes, addr, cpu->Y, cpu->X & cpu->A, pagex);
 			break;
 
 		case LAR:
@@ -1159,8 +1158,8 @@ static bool cpu_exec(struct cpu *cpu, NES *nes)
 			break;
 
 		case XAS:
+			cpu_sxa_sya(nes, addr, cpu->Y, cpu->X & cpu->A, pagex);
 			cpu->SP = cpu->A & cpu->X;
-			sys_write_cycle(nes, addr, cpu->SP & ((addr >> 8) + 1));
 			break;
 
 		default:
